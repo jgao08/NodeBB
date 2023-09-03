@@ -1,36 +1,44 @@
-'use strict';
-
-const EventEmitter = require('events');
-const nconf = require('nconf');
-
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.reset = exports.removeAllListeners = exports.on = exports.publish = void 0;
+const events_1 = require("events");
+const nconf_1 = __importDefault(require("nconf"));
+const pubsub_1 = __importDefault(require("./database/redis/pubsub"));
+class CustomEventEmitter extends events_1.EventEmitter {
+    publish(event, data) {
+        this.emit(event, data);
+    }
+}
 let real;
 let noCluster;
 let singleHost;
-
 function get() {
     if (real) {
         return real;
     }
-
     let pubsub;
-
-    if (!nconf.get('isCluster')) {
+    if (!nconf_1.default.get('isCluster')) {
         if (noCluster) {
             real = noCluster;
             return real;
         }
-        noCluster = new EventEmitter();
+        noCluster = new CustomEventEmitter();
         noCluster.publish = noCluster.emit.bind(noCluster);
         pubsub = noCluster;
-    } else if (nconf.get('singleHostCluster')) {
+    }
+    else if (nconf_1.default.get('singleHostCluster')) {
         if (singleHost) {
             real = singleHost;
             return real;
         }
-        singleHost = new EventEmitter();
+        singleHost = new CustomEventEmitter();
         if (!process.send) {
             singleHost.publish = singleHost.emit.bind(singleHost);
-        } else {
+        }
+        else {
             singleHost.publish = function (event, data) {
                 process.send({
                     action: 'pubsub',
@@ -45,27 +53,29 @@ function get() {
             });
         }
         pubsub = singleHost;
-    } else if (nconf.get('redis')) {
-        pubsub = require('./database/redis/pubsub');
-    } else {
+    }
+    else if (nconf_1.default.get('redis')) {
+        pubsub = new pubsub_1.default();
+    }
+    else {
         throw new Error('[[error:redis-required-for-pubsub]]');
     }
-
     real = pubsub;
     return pubsub;
 }
-
-module.exports = {
-    publish: function (event, data) {
-        get().publish(event, data);
-    },
-    on: function (event, callback) {
-        get().on(event, callback);
-    },
-    removeAllListeners: function (event) {
-        get().removeAllListeners(event);
-    },
-    reset: function () {
-        real = null;
-    },
+const publish = function (event, data) {
+    get().publish(event, data);
 };
+exports.publish = publish;
+const on = function (event, callback) {
+    get().on(event, callback);
+};
+exports.on = on;
+const removeAllListeners = function (event) {
+    get().removeAllListeners(event);
+};
+exports.removeAllListeners = removeAllListeners;
+const reset = function () {
+    real = null;
+};
+exports.reset = reset;
