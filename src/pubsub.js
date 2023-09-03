@@ -7,11 +7,6 @@ exports.reset = exports.removeAllListeners = exports.on = exports.publish = void
 const events_1 = require("events");
 const nconf_1 = __importDefault(require("nconf"));
 const pubsub_1 = __importDefault(require("./database/redis/pubsub"));
-class CustomEventEmitter extends events_1.EventEmitter {
-    publish(event, data) {
-        this.emit(event, data);
-    }
-}
 let real;
 let noCluster;
 let singleHost;
@@ -25,7 +20,7 @@ function get() {
             real = noCluster;
             return real;
         }
-        noCluster = new CustomEventEmitter();
+        noCluster = new events_1.EventEmitter();
         noCluster.publish = noCluster.emit.bind(noCluster);
         pubsub = noCluster;
     }
@@ -34,7 +29,7 @@ function get() {
             real = singleHost;
             return real;
         }
-        singleHost = new CustomEventEmitter();
+        singleHost = new events_1.EventEmitter();
         if (!process.send) {
             singleHost.publish = singleHost.emit.bind(singleHost);
         }

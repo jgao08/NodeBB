@@ -2,15 +2,13 @@ import { EventEmitter } from 'events';
 import nconf from 'nconf';
 import PubSub from './database/redis/pubsub';
 
-class CustomEventEmitter extends EventEmitter {
-    publish(event: string, data: string) {
-        this.emit(event, data);
-    }
-}
+let real : NewEventEmitter;
+let noCluster : NewEventEmitter;
+let singleHost : NewEventEmitter;
 
-let real : CustomEventEmitter;
-let noCluster : CustomEventEmitter;
-let singleHost : CustomEventEmitter;
+interface NewEventEmitter extends EventEmitter {
+    publish(event: string, data: string): void;
+}
 
 interface MessageObject{
     action: string;
@@ -23,24 +21,24 @@ function get() {
         return real;
     }
 
-    let pubsub : CustomEventEmitter;
+    let pubsub : NewEventEmitter;
 
     if (!nconf.get('isCluster')) {
         if (noCluster) {
             real = noCluster;
             return real;
         }
-        noCluster = new CustomEventEmitter();
-        noCluster.publish = noCluster.emit.bind(noCluster) as CustomEventEmitter['publish'];
+        noCluster = new EventEmitter() as NewEventEmitter;
+        noCluster.publish = noCluster.emit.bind(noCluster) as NewEventEmitter['publish'];
         pubsub = noCluster;
     } else if (nconf.get('singleHostCluster')) {
         if (singleHost) {
             real = singleHost;
             return real;
         }
-        singleHost = new CustomEventEmitter();
+        singleHost = new EventEmitter() as NewEventEmitter;
         if (!process.send) {
-            singleHost.publish = singleHost.emit.bind(singleHost) as CustomEventEmitter['publish'];
+            singleHost.publish = singleHost.emit.bind(singleHost) as NewEventEmitter['publish'];
         } else {
             singleHost.publish = function (event : string, data : string) {
                 process.send({
@@ -57,7 +55,7 @@ function get() {
         }
         pubsub = singleHost;
     } else if (nconf.get('redis')) {
-        pubsub = PubSub as CustomEventEmitter;
+        pubsub = PubSub as NewEventEmitter;
     } else {
         throw new Error('[[error:redis-required-for-pubsub]]');
     }
