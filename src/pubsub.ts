@@ -57,7 +57,7 @@ function get() {
         }
         pubsub = singleHost;
     } else if (nconf.get('redis')) {
-        pubsub = new PubSub() as CustomEventEmitter;
+        pubsub = PubSub as CustomEventEmitter;
     } else {
         throw new Error('[[error:redis-required-for-pubsub]]');
     }

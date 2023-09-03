@@ -55,7 +55,7 @@ function get() {
         pubsub = singleHost;
     }
     else if (nconf_1.default.get('redis')) {
-        pubsub = new pubsub_1.default();
+        pubsub = pubsub_1.default;
     }
     else {
         throw new Error('[[error:redis-required-for-pubsub]]');
