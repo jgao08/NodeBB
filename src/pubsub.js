@@ -6,6 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.reset = exports.removeAllListeners = exports.on = exports.publish = void 0;
 const events_1 = __importDefault(require("events"));
 const nconf_1 = __importDefault(require("nconf"));
+const pubsub_1 = __importDefault(require("./database/redis/pubsub"));
 let real;
 let noCluster;
 let singleHost;
@@ -49,7 +50,7 @@ function get() {
         pubsub = singleHost;
     }
     else if (nconf_1.default.get('redis')) {
-        pubsub = require('./database/redis/pubsub');
+        pubsub = pubsub_1.default;
     }
     else {
         throw new Error('[[error:redis-required-for-pubsub]]');
