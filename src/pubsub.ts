@@ -1,5 +1,6 @@
 import EventEmitter from 'events';
 import nconf from 'nconf';
+import PubSub from './database/redis/pubsub';
 
 let real: NewEventEmitter;
 let noCluster: NewEventEmitter;
@@ -54,7 +55,7 @@ function get() {
         }
         pubsub = singleHost;
     } else if (nconf.get('redis')) {
-        pubsub = require('./database/redis/pubsub') as NewEventEmitter;
+        pubsub = PubSub.default as NewEventEmitter;
     } else {
         throw new Error('[[error:redis-required-for-pubsub]]');
     }
