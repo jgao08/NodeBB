@@ -1,39 +1,42 @@
-"use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.reset = exports.removeAllListeners = exports.on = exports.publish = void 0;
-const events_1 = require("events");
-const nconf_1 = __importDefault(require("nconf"));
-const pubsub_1 = __importDefault(require("./database/redis/pubsub"));
+'use strict';
+
+import EventEmitter from 'events';
+import nconf from 'nconf';
+
 let real;
 let noCluster;
 let singleHost;
+
+interface MessageObject{
+    action: string;
+    event: string;
+    data: string;
+}
+
 function get() {
     if (real) {
         return real;
     }
+
     let pubsub;
-    if (!nconf_1.default.get('isCluster')) {
+
+    if (!nconf.get('isCluster')) {
         if (noCluster) {
             real = noCluster;
             return real;
         }
-        noCluster = new events_1.EventEmitter();
+        noCluster = new EventEmitter();
         noCluster.publish = noCluster.emit.bind(noCluster);
         pubsub = noCluster;
-    }
-    else if (nconf_1.default.get('singleHostCluster')) {
+    } else if (nconf.get('singleHostCluster')) {
         if (singleHost) {
             real = singleHost;
             return real;
         }
-        singleHost = new events_1.EventEmitter();
+        singleHost = new EventEmitter();
         if (!process.send) {
             singleHost.publish = singleHost.emit.bind(singleHost);
-        }
-        else {
+        } else {
             singleHost.publish = function (event, data) {
                 process.send({
                     action: 'pubsub',
@@ -41,36 +44,35 @@ function get() {
                     data: data,
                 });
             };
-            process.on('message', (message) => {
+            process.on('message', (message : MessageObject) => {
                 if (message && typeof message === 'object' && message.action === 'pubsub') {
                     singleHost.emit(message.event, message.data);
                 }
             });
         }
         pubsub = singleHost;
-    }
-    else if (nconf_1.default.get('redis')) {
-        pubsub = pubsub_1.default;
-    }
-    else {
+    } else if (nconf.get('redis')) {
+        pubsub = require('./database/redis/pubsub');
+    } else {
         throw new Error('[[error:redis-required-for-pubsub]]');
     }
+
     real = pubsub;
     return pubsub;
 }
-const publish = function (event, data) {
+
+export const publish = function (event: any, data: any) {
     get().publish(event, data);
 };
-exports.publish = publish;
-const on = function (event, callback) {
+
+export const on = function (event: string | any, callback: (...args: any[]) => void) {
     get().on(event, callback);
 };
-exports.on = on;
-const removeAllListeners = function (event) {
+
+export const removeAllListeners = function (event: string | any) {
     get().removeAllListeners(event);
 };
-exports.removeAllListeners = removeAllListeners;
-const reset = function () {
+
+export const reset = function () {
     real = null;
 };
-exports.reset = reset;
