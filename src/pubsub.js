@@ -1,12 +1,11 @@
-"use strict";
+'use strict';
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.reset = exports.removeAllListeners = exports.on = exports.publish = void 0;
-const events_1 = require("events");
+const events_1 = __importDefault(require("events"));
 const nconf_1 = __importDefault(require("nconf"));
-const pubsub_1 = __importDefault(require("./database/redis/pubsub"));
 let real;
 let noCluster;
 let singleHost;
@@ -20,7 +19,7 @@ function get() {
             real = noCluster;
             return real;
         }
-        noCluster = new events_1.EventEmitter();
+        noCluster = new events_1.default();
         noCluster.publish = noCluster.emit.bind(noCluster);
         pubsub = noCluster;
     }
@@ -29,7 +28,7 @@ function get() {
             real = singleHost;
             return real;
         }
-        singleHost = new events_1.EventEmitter();
+        singleHost = new events_1.default();
         if (!process.send) {
             singleHost.publish = singleHost.emit.bind(singleHost);
         }
@@ -50,7 +49,7 @@ function get() {
         pubsub = singleHost;
     }
     else if (nconf_1.default.get('redis')) {
-        pubsub = pubsub_1.default;
+        pubsub = require('./database/redis/pubsub');
     }
     else {
         throw new Error('[[error:redis-required-for-pubsub]]');
