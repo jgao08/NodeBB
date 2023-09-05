@@ -6,7 +6,7 @@ let noCluster: NewEventEmitter;
 let singleHost: NewEventEmitter;
 
 interface NewEventEmitter extends EventEmitter {
-    publish(event: string, data: any): void;
+    publish(event: string | symbol, data: any): void;
 }
 
 interface MessageObject{
@@ -63,15 +63,15 @@ function get() {
     return pubsub;
 }
 
-export const publish = function (event: any, data: any) {
+export const publish = function (event: string | symbol, data: any) {
     get().publish(event, data);
 };
 
-export const on = function (event: string | any, callback: (...args: any[]) => void) {
+export const on = function (event: string | symbol, callback: (...args: any[]) => void) {
     get().on(event, callback);
 };
 
-export const removeAllListeners = function (event: string | any) {
+export const removeAllListeners = function (event: string | symbol) {
     get().removeAllListeners(event);
 };
 
