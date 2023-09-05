@@ -75,7 +75,7 @@ function get() {
         Promise.resolve().then(() => __importStar(require('./database/redis/pubsub'))).then((pubsubModule) => {
             pubsub = pubsubModule.default;
         }).catch((err) => {
-            console.error('Error importing pubsub module:', err);
+            throw new Error('Error importing pubsub module:');
         });
     }
     else {
