@@ -1,4 +1,27 @@
 "use strict";
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
@@ -6,7 +29,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.reset = exports.removeAllListeners = exports.on = exports.publish = void 0;
 const events_1 = __importDefault(require("events"));
 const nconf_1 = __importDefault(require("nconf"));
-const pubsub_1 = __importDefault(require("./database/redis/pubsub"));
 let real;
 let noCluster;
 let singleHost;
@@ -50,7 +72,12 @@ function get() {
         pubsub = singleHost;
     }
     else if (nconf_1.default.get('redis')) {
-        pubsub = pubsub_1.default.default;
+        Promise.resolve().then(() => __importStar(require('./database/redis/pubsub'))).then((pubsubModule) => {
+            pubsub = pubsubModule.default;
+        }).catch((err) => {
+            console.error('Error importing pubsub module:', err);
+        });
+        // pubsub = require('./database/redis/pubsub') as NewEventEmitter;
     }
     else {
         throw new Error('[[error:redis-required-for-pubsub]]');
