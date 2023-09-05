@@ -1,11 +1,13 @@
-'use strict';
-
 import EventEmitter from 'events';
 import nconf from 'nconf';
 
-let real;
-let noCluster;
-let singleHost;
+let real: NewEventEmitter;
+let noCluster: NewEventEmitter;
+let singleHost: NewEventEmitter;
+
+interface NewEventEmitter extends EventEmitter {
+    publish(event: string, data: any): void;
+}
 
 interface MessageObject{
     action: string;
@@ -18,26 +20,26 @@ function get() {
         return real;
     }
 
-    let pubsub;
+    let pubsub: NewEventEmitter;
 
     if (!nconf.get('isCluster')) {
         if (noCluster) {
             real = noCluster;
             return real;
         }
-        noCluster = new EventEmitter();
-        noCluster.publish = noCluster.emit.bind(noCluster);
+        noCluster = new EventEmitter() as NewEventEmitter;
+        noCluster.publish = noCluster.emit.bind(noCluster) as NewEventEmitter['publish'];
         pubsub = noCluster;
     } else if (nconf.get('singleHostCluster')) {
         if (singleHost) {
             real = singleHost;
             return real;
         }
-        singleHost = new EventEmitter();
+        singleHost = new EventEmitter() as NewEventEmitter;
         if (!process.send) {
-            singleHost.publish = singleHost.emit.bind(singleHost);
+            singleHost.publish = singleHost.emit.bind(singleHost) as NewEventEmitter['publish'];
         } else {
-            singleHost.publish = function (event, data) {
+            singleHost.publish = function (event : string | symbol, data: any) {
                 process.send({
                     action: 'pubsub',
                     event: event,
@@ -52,7 +54,7 @@ function get() {
         }
         pubsub = singleHost;
     } else if (nconf.get('redis')) {
-        pubsub = require('./database/redis/pubsub');
+        pubsub = require('./database/redis/pubsub') as NewEventEmitter;
     } else {
         throw new Error('[[error:redis-required-for-pubsub]]');
     }
