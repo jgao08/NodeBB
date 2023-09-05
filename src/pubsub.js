@@ -77,7 +77,6 @@ function get() {
         }).catch((err) => {
             console.error('Error importing pubsub module:', err);
         });
-        // pubsub = require('./database/redis/pubsub') as NewEventEmitter;
     }
     else {
         throw new Error('[[error:redis-required-for-pubsub]]');
